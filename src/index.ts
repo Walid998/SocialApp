@@ -1,19 +1,32 @@
-import logger from './logger';
-import app from './app';
-import dotenv from 'dotenv';
+import express, { Application, Request, Response } from 'express';
+import configs from './configs';
+import Database from './database/database';
 
-dotenv.config();
+class App {
+    public app: Application;
 
-const { APP_HOST, APP_PORT } = process.env;
-const port = APP_PORT;
+    constructor() {
+        this.app = express();
+        this.databaseSync();
+        this.routes();
+    }
 
-process.on('unhandledRejection', (reason, p) =>
-  logger.error('Unhandled Rejection at: Promise ', p, reason)
-);
+    protected routes() {
+        this.app.route('/').get((req: Request, res: Response) => {
+            res.send('Hello World');
+        });
+    }
 
-const server = app.listen(port);
-server.on('listening', () =>
-  logger.info('Feathers application started on http://%s:%d', APP_HOST, port)
-);
+    protected databaseSync(){
+        const db = new Database();
+        db.sequelize?.sync();
+    }
+}
 
+const port = configs.APP_PORT;
 
+const app = new App().app;
+
+app.listen(port, () => {
+    console.log(`Server Starts Successfully: http://localhost:${port}`);
+});
